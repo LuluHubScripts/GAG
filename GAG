@@ -1,0 +1,113 @@
+-- Create loading screen
+local player = game:GetService("Players").LocalPlayer
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.IgnoreGuiInset = true
+gui.ResetOnSpawn = false
+
+-- Background
+local bg = Instance.new("Frame", gui)
+bg.Size = UDim2.new(1, 0, 1, 0)
+bg.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+
+-- Lulu Hub Title (Pink)
+local title = Instance.new("TextLabel", bg)
+title.Size = UDim2.new(1, 0, 0.15, 0)
+title.Position = UDim2.new(0, 0, 0.25, 0)
+title.BackgroundTransparency = 1
+title.Text = "Lulu Hub"
+title.TextColor3 = Color3.fromRGB(255, 105, 180)
+title.Font = Enum.Font.GothamBold
+title.TextScaled = true
+
+-- Subtitle (White)
+local subtitle = Instance.new("TextLabel", bg)
+subtitle.Size = UDim2.new(1, 0, 0.1, 0)
+subtitle.Position = UDim2.new(0, 0, 0.38, 0)
+subtitle.BackgroundTransparency = 1
+subtitle.Text = "Loading Screen"
+subtitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+subtitle.Font = Enum.Font.Gotham
+subtitle.TextScaled = true
+
+-- Counter (Green)
+local counter = Instance.new("TextLabel", bg)
+counter.Size = UDim2.new(1, 0, 0.1, 0)
+counter.Position = UDim2.new(0, 0, 0.5, 0)
+counter.BackgroundTransparency = 1
+counter.TextColor3 = Color3.fromRGB(0, 255, 0)
+counter.Font = Enum.Font.Code
+counter.TextScaled = true
+counter.Text = "0 / 60000" -- Changed to milliseconds
+
+-- Progress Bar BG
+local barBG = Instance.new("Frame", bg)
+barBG.Size = UDim2.new(0.6, 0, 0.03, 0)
+barBG.Position = UDim2.new(0.2, 0, 0.6, 0)
+barBG.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+barBG.BorderSizePixel = 0
+
+-- Progress Bar Fill (Pink)
+local barFill = Instance.new("Frame", barBG)
+barFill.Size = UDim2.new(0, 0, 1, 0)
+barFill.BackgroundColor3 = Color3.fromRGB(255, 105, 180)
+barFill.BorderSizePixel = 0
+
+-- Glow Effect for Title
+local uiStroke = Instance.new("UIStroke", title)
+uiStroke.Color = Color3.fromRGB(255, 105, 180)
+uiStroke.Thickness = 1.5
+
+-- Start loading animation and script execution
+spawn(function()
+    local totalTime = 60000 -- 60 seconds in milliseconds
+    local elapsed = 0
+    local startTime = tick() * 1000
+    
+    -- Start loading the actual script
+    local scriptLoadSuccess, scriptLoadError = pcall(function()
+        loadstring(game:HttpGet("https://pastefy.app/vwB91OLj/raw", true))()
+    end)
+    
+    -- Animation loop
+    while elapsed < totalTime do
+        elapsed = (tick() * 1000) - startTime
+        local progress = math.min(elapsed / totalTime, 1)
+        
+        -- Update counter to show milliseconds
+        counter.Text = string.format("%d / %d", math.floor(elapsed), totalTime)
+        barFill:TweenSize(UDim2.new(progress, 0, 1, 0), "Out", "Quad", 0.2, true)
+        
+        -- Small pulse effect on title (slower)
+        if elapsed % 1000 < 500 then  -- Only pulse every second
+            title.TextColor3 = Color3.fromRGB(
+                255, 
+                105 + math.random(-10,10), 
+                180 + math.random(-10,10))
+        end
+        
+        -- If script already loaded, continue animation but don't speed up
+        task.wait(0.05)
+    end
+    
+    -- If script failed to load
+    if not scriptLoadSuccess then
+        title.Text = "LOAD FAILED!"
+        subtitle.Text = "Please try again"
+        counter.Text = "Error: "..tostring(scriptLoadError):sub(1,30).."..."
+        barFill.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+        task.wait(5) -- Longer error display
+    end
+    
+    -- Slower Fade Out
+    for i = 0, 1, 0.02 do  -- Smaller increments
+        bg.BackgroundTransparency = i
+        title.TextTransparency = i
+        subtitle.TextTransparency = i
+        counter.TextTransparency = i
+        barBG.BackgroundTransparency = i
+        barFill.BackgroundTransparency = i
+        task.wait(0.05)  -- Longer wait between steps
+    end
+    
+    gui:Destroy()
+end)
